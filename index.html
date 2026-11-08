@@ -18,7 +18,8 @@ header,.mh{display:flex;justify-content:space-between;align-items:center}
 .t:hover{color:var(--fg)}
 #tr{display:flex;align-items:baseline;gap:10px;margin:0 0 2px;flex-wrap:wrap}
 #time{font-size:34px;font-variant-numeric:tabular-nums;font-weight:300;line-height:1.1}
-#t2{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+#t2,#mv{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+#mv{font-size:13px}
 #st{font-size:12px;margin-left:auto}
 .r{color:#c0392b!important}
 #wrap{position:relative;flex:1;min-height:0;width:100%;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
@@ -56,8 +57,8 @@ th:first-child,td:first-child{text-align:left;color:var(--mut)}
 <body>
 <main>
 <header><div class="ttl">1×1×1(×n) ルービックキューブ</div><button class="t" id="mn">メニュー</button></header>
-<div class="row"><button class="t" id="new">新しい問題</button><button class="t" id="rs">やり直し</button></div>
-<div id="tr"><span id="time">0.0</span><span id="t2"></span><span id="st"></span></div>
+<div class="row"><button class="t" id="new">スタート</button><button class="t" id="rs">やり直し</button></div>
+<div id="tr"><span id="time">0.0</span><span id="mv"></span><span id="t2"></span><span id="st"></span></div>
 <div id="wrap"><div id="stage"><div id="scene"></div><div id="ui"></div></div></div>
 </main>
 
@@ -65,21 +66,26 @@ th:first-child,td:first-child{text-align:left;color:var(--mut)}
 <div class="mh"><span class="ttl">メニュー</span><button class="t" id="cl">閉じる</button></div>
 
 <h2>難易度(選ぶと新しい問題を始めます)</h2>
-<div class="row"><button class="t" data-v="1">かんたん</button><button class="t" data-v="2">ふつう</button><button class="t" data-v="3">むずかしい</button></div>
-<p class="d">キューブの数は、かんたん7個、ふつう19個、むずかしい37個です。</p>
+<div class="row"><button class="t" data-v="1">かんたん</button><button class="t" data-v="2">ふつう</button><button class="t" data-v="3">むずかしい</button><button class="t" data-v="c">カスタム</button></div>
+<p class="d">キューブの数は、かんたん7個、ふつう19個、むずかしい37個です。<br>カスタムは、タイムと手数の計測がなく、クリアしても盤面が止まりません(記録にも残りません)。カスタムの盤のサイズは下から選べます。</p>
+<div class="row"><button class="t" data-cs="1">7個</button><button class="t" data-cs="2">19個</button><button class="t" data-cs="3">37個</button></div>
 
 <h2>ルール</h2>
-<div class="lg"><svg viewBox="0 0 60 60"><polygon style="fill:#f5d90a" points="30,4 52,17 30,30 8,17"/><polygon style="fill:#f58a1f" points="8,17 30,30 30,56 8,43"/><polygon style="fill:#1fa84a" points="30,30 52,17 52,43 30,56"/></svg>←のキューブを盤からなくしたらクリア</div>
-<p class="d">タイムは問題が出た瞬間から計ります。最初に矢印を押してからの経過時間も、小さく並べて表示します。</p>
+<div class="lg"><svg viewBox="0 0 60 60"><polygon style="fill:#f5d90a" points="30,4 52,17 30,30 8,17"/><polygon style="fill:#1fa84a" points="8,17 30,30 30,56 8,43"/><polygon style="fill:#f58a1f" points="30,30 52,17 52,43 30,56"/></svg>←のキューブを盤からなくしたらクリア</div>
+<p class="d">読み込み直後は、盤面が白・緑・赤の状態で止まっています。「スタート」を押すと問題が出て、ゲームが始まります。<br>タイムは問題が出た瞬間から計ります。最初に矢印を押してからの経過時間も、小さく並べて表示します。矢印を押した回数が手数です(押して戻す操作も1手です)。</p>
 
 <h2>操作</h2>
 <p class="d">盤の外側の矢印を押すと、その矢印が指すライン上のキューブがすべて、ラインの方向の軸まわりに180°回転します。押した矢印は塗りつぶしで表示され、もう一度押すと元に戻ります。矢印の少し後ろを押しても反応します。<br>「やり直し」は、この問題を最初の状態に戻して、タイムを計り直します。やり直した盤面は、タイムが赤字になり、記録にも自己ベストにも残りません。</p>
 
 <h2>記録</h2>
 <div class="row"><button class="t" data-rv="1">かんたん</button><button class="t" data-rv="2">ふつう</button><button class="t" data-rv="3">むずかしい</button></div>
-<div id="sum"></div>
+<h2>自己ベスト</h2>
+<table id="best"></table>
+<p class="d" id="cnt" style="margin-top:8px"></p>
+<h2>履歴(難易度ごと・ジャンルごと)</h2>
+<div class="row"><button class="t" data-gv="0">タイム</button><button class="t" data-gv="1">手数</button><button class="t" data-gv="2">タイム×手数</button></div>
 <table id="tbl"></table>
-<p class="d" style="margin-top:14px">ao5は直近5回から最速と最遅を除いた3回の平均、ao12は直近12回から最速と最遅を除いた10回の平均です。</p>
+<p class="d" style="margin-top:14px">ao5は直近5回から最速と最遅を除いた3回の平均、ao12は直近12回から最速と最遅を除いた10回の平均です。タイム×手数は、クリアタイム(秒)に手数をかけた値です。いずれも小さいほど良い記録です。以前の記録(手数なし)はタイムの記録にだけ残ります。</p>
 </div></div>
 
 <script>
@@ -97,9 +103,9 @@ const U=[[0,1,0],[0,0,1],[1,0,0]].map(e=>[0,1,2].map(r=>M0[r][0]*e[0]+M0[r][1]*e
 const FL=[[0,2],[0,1],[1,2]];
 const px=(q,r)=>[H3*S*q,S*(r+q/2)];
 const key=(c,t)=>t===0?c.q+R:t===1?c.r+R:c.q+c.r+R;
-const ng=c=>{const s=[0,1,2].map(i=>M0[0][i]*c.L[0][i]+M0[1][i]*c.L[1][i]+M0[2][i]*c.L[2][i]);return s[0]<0&&s[1]<0&&s[2]>0};
-const FACES=[['rotateY(90deg)','#f58a1f'],['rotateY(-90deg)','#d62d2d'],['rotateX(-90deg)','#f5d90a'],['rotateX(90deg)','#f4f4f0'],['','#1fa84a'],['rotateY(180deg)','#1f5fd0']];
-let cubes=[],bt=[[],[],[]],pr,moves=0,t0=0,tMove=null,tm=null,done=false,pb=false,init=[],running=false,W=0,H=0,retry=false,R=2,vlv=2;
+const ng=c=>{const s=[0,1,2].map(i=>M0[0][i]*c.L[0][i]+M0[1][i]*c.L[1][i]+M0[2][i]*c.L[2][i]);return s[0]>0&&s[1]<0&&s[2]<0};
+const FACES=[['rotateY(90deg)','#1f5fd0'],['rotateY(-90deg)','#1fa84a'],['rotateX(-90deg)','#f5d90a'],['rotateX(90deg)','#f4f4f0'],['','#d62d2d'],['rotateY(180deg)','#f58a1f']];
+let cubes=[],bt=[[],[],[]],pr,moves=0,t0=0,tMove=null,tm=null,done=false,pbG=[],init=[],running=false,W=0,H=0,retry=false,R=2,vlv=2,started=false,custom=false,cR=2,gv=0;
 
 function setT(c,M){c.cu.style.transform='matrix3d('+[M[0][0],M[1][0],M[2][0],0,M[0][1],M[1][1],M[2][1],0,M[0][2],M[1][2],M[2][2],0,0,0,0,1].join(',')+')'}
 function build(){
@@ -165,65 +171,102 @@ function updT(){
 }
 function setStatus(){
   const e=$('st');
-  if(done)e.textContent=retry?'クリア・記録なし':pb?'クリア・ベスト更新':'クリア';
+  if(!started)e.textContent='';
+  else if(custom)e.textContent='カスタム(計測なし)';
+  else if(done)e.textContent=retry?'クリア・記録なし':pbG.length?'クリア・ベスト更新('+pbG.join('・')+')':'クリア';
   else e.textContent=retry?'やり直し・記録なし':'';
-  e.classList.toggle('r',retry);
-  $('time').classList.toggle('r',retry);
+  const rr=retry&&started&&!custom;
+  e.classList.toggle('r',rr);
+  $('time').classList.toggle('r',rr);
 }
+function updMv(){$('mv').textContent=(started&&!custom)?'手数 '+moves:''}
 function refresh(){
   for(let t=0;t<3;t++)for(let i=0;i<2*R+1;i++)bt[t][i].classList.toggle('on',!!pr[t][i]);
   setStatus();
   return cubes.filter(ng).length;
 }
 function press(t,i){
-  if(done)return;
+  if(!started||done)return;
   if(tMove===null)tMove=performance.now();
-  pr[t][i]^=1;moves++;
+  pr[t][i]^=1;moves++;updMv();
   cubes.forEach(c=>{if(key(c,t)===i){c.L=mm(refl(U[t]),c.L);c.pend.push(t)}});
   kick();
-  if(refresh()===0)finish();
+  if(refresh()===0&&!custom)finish();
 }
 // 記録
-const hk=l=>'rubik19s_h_'+l;
-function hist(l){try{const a=JSON.parse(localStorage.getItem(hk(l)));return Array.isArray(a)?a:[]}catch(e){return []}}
-function saveHist(l,a){try{localStorage.setItem(hk(l),JSON.stringify(a.slice(-300)))}catch(e){}}
+const hk=l=>'rubik19s_h_'+l,hk2=l=>'rubik19s_h2_'+l;
+function hist(l){
+  try{const a=JSON.parse(localStorage.getItem(hk2(l)));if(Array.isArray(a))return a.filter(r=>r&&typeof r.t==='number')}catch(e){}
+  try{const o=JSON.parse(localStorage.getItem(hk(l)));if(Array.isArray(o))return o.filter(x=>typeof x==='number').map(t=>({t:t,m:null}))}catch(e){}
+  return [];
+}
+function saveHist(l,a){try{localStorage.setItem(hk2(l),JSON.stringify(a.slice(-300)))}catch(e){}}
 function ao(a,i,n){
   if(i<n-1)return null;
   const s=a.slice(i-n+1,i+1).sort((x,y)=>x-y).slice(1,-1);
   return s.reduce((p,c)=>p+c,0)/s.length;
 }
-const f2=x=>x==null?'—':x.toFixed(2);
+const GEN=[
+  {n:'タイム',d:2,v:r=>r.t},
+  {n:'手数',d:0,v:r=>r.m==null?null:r.m},
+  {n:'タイム×手数',d:2,v:r=>r.m==null?null:r.t*r.m}
+];
+const series=(a,g)=>a.map(g.v).filter(x=>x!=null);
+const fx=(x,d)=>x==null?'—':x.toFixed(d);
+const mnv=x=>{const v=x.filter(y=>y!=null);return v.length?Math.min(...v):null};
 function renderRec(){
   document.querySelectorAll('[data-rv]').forEach(b=>b.classList.toggle('on',+b.dataset.rv===vlv));
-  const a=hist(vlv),a5=a.map((_,i)=>ao(a,i,5)),a12=a.map((_,i)=>ao(a,i,12));
-  const mn=x=>{const v=x.filter(y=>y!=null);return v.length?Math.min(...v):null};
-  const last=x=>x.length?x[x.length-1]:null;
-  $('sum').innerHTML=[['回数',a.length||'—'],['自己ベスト',f2(mn(a))],['ベストao5',f2(mn(a5))],['ベストao12',f2(mn(a12))],['現在のao5',f2(last(a5))],['現在のao12',f2(last(a12))]]
-    .map(r=>'<div><span>'+r[0]+'</span><b style="font-weight:400">'+r[1]+'</b></div>').join('');
-  let h='<tr><th>#</th><th>タイム</th><th>ao5</th><th>ao12</th></tr>';
-  for(let i=a.length-1;i>=0;i--)h+='<tr><td>'+(i+1)+'</td><td>'+a[i].toFixed(2)+'</td><td>'+f2(a5[i])+'</td><td>'+f2(a12[i])+'</td></tr>';
+  document.querySelectorAll('[data-gv]').forEach(b=>b.classList.toggle('on',+b.dataset.gv===gv));
+  const a=hist(vlv);
+  let h='<tr><th>ジャンル</th><th>単発</th><th>ao5</th></tr>';
+  GEN.forEach(g=>{
+    const s=series(a,g);
+    h+='<tr><td>'+g.n+'</td><td>'+fx(mnv(s),g.d)+'</td><td>'+fx(mnv(s.map((_,i)=>ao(s,i,5))),2)+'</td></tr>';
+  });
+  $('best').innerHTML=h;
+  $('cnt').textContent='記録数 '+a.length+'回';
+  const g=GEN[gv],s=series(a,g),a5=s.map((_,i)=>ao(s,i,5)),a12=s.map((_,i)=>ao(s,i,12));
+  h='<tr><th>#</th><th>単発</th><th>ao5</th><th>ao12</th></tr>';
+  for(let i=s.length-1;i>=0;i--)h+='<tr><td>'+(i+1)+'</td><td>'+fx(s[i],g.d)+'</td><td>'+fx(a5[i],2)+'</td><td>'+fx(a12[i],2)+'</td></tr>';
   $('tbl').innerHTML=h;
 }
 function finish(){
   done=true;clearInterval(tm);
   const n=performance.now(),s=(n-t0)/1000;
   $('time').textContent=s.toFixed(2);$('t2').textContent='操作開始から '+((n-tMove)/1000).toFixed(2);
+  pbG=[];
   if(!retry){
-    const a=hist(R),prev=a.length?Math.min(...a):null,v=+s.toFixed(2);
-    a.push(v);saveHist(R,a);pb=prev===null||v<prev;
+    const a=hist(R),rec={t:+s.toFixed(2),m:moves};
+    GEN.forEach(g=>{
+      const x=g.v(rec);if(x==null)return;
+      const sr=series(a,g),prev=sr.length?Math.min(...sr):null;
+      if(prev===null||x<prev)pbG.push(g.n);
+    });
+    a.push(rec);saveHist(R,a);
   }
-  setStatus();
+  updMv();setStatus();
 }
 function reset(){
-  clearInterval(tm);moves=0;done=false;pb=false;tMove=null;
+  clearInterval(tm);moves=0;done=false;pbG=[];tMove=null;
   pr=[0,1,2].map(()=>Array(2*R+1).fill(0));
   cubes.forEach((c,n)=>{c.L=init[n].map(r=>r.slice());c.M=c.L.map(r=>r.slice());c.pend=[];c.anim=null;setT(c,c.M)});
-  $('t2').textContent='';$('time').textContent='0.0';
-  t0=performance.now();tm=setInterval(updT,50);
+  $('t2').textContent='';
+  if(custom){$('time').textContent='—'}
+  else{$('time').textContent='0.0';t0=performance.now();tm=setInterval(updT,50)}
+  updMv();
   refresh();
 }
+// 読み込み直後:白・緑・赤の状態で停止(スタートを押すまでゲームは始まらない)
+function showIdle(){
+  clearInterval(tm);moves=0;done=false;retry=false;pbG=[];tMove=null;started=false;
+  pr=[0,1,2].map(()=>Array(2*R+1).fill(0));
+  cubes.forEach(c=>{c.L=M0.map(r=>r.slice());c.M=c.L.map(r=>r.slice());c.pend=[];c.anim=null;setT(c,c.M)});
+  $('t2').textContent='';$('time').textContent='0.0';
+  $('new').textContent='スタート';
+  updMv();refresh();
+}
 function gen(){
-  const fin=[[1,1,1],[1,-1,-1],[-1,1,-1]];
+  const fin=[[1,1,1],[-1,1,-1],[-1,-1,1]];
   do{
     const sol=Array.from({length:3},()=>Array.from({length:2*R+1},()=>Math.random()<.5));
     cubes.forEach(c=>{
@@ -233,17 +276,30 @@ function gen(){
     });
   }while(cubes.filter(ng).length<NEED[R]);
   init=cubes.map(c=>c.L.map(r=>r.slice()));
+  started=true;$('new').textContent='新しい問題';
   retry=false;reset();
 }
 $('new').onclick=gen;
-$('rs').onclick=()=>{retry=true;reset()};
+$('rs').onclick=()=>{if(!started)return;retry=true;reset()};
 // メニュー
 const menu=$('menu');
-function mark(){document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',+b.dataset.v===R))}
+function mark(){
+  document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v==='c'?custom:(!custom&&+b.dataset.v===R)));
+  document.querySelectorAll('[data-cs]').forEach(b=>b.classList.toggle('on',+b.dataset.cs===cR));
+}
+function startMode(){build();gen();mark();menu.classList.remove('open');fit()}
 $('mn').onclick=()=>{vlv=R;mark();renderRec();menu.classList.add('open');menu.scrollTop=0};
 $('cl').onclick=()=>menu.classList.remove('open');
-document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{R=+b.dataset.v;build();gen();mark();menu.classList.remove('open');fit()});
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{
+  if(b.dataset.v==='c'){custom=true;R=cR}else{custom=false;R=+b.dataset.v}
+  startMode();
+});
+document.querySelectorAll('[data-cs]').forEach(b=>b.onclick=()=>{
+  cR=+b.dataset.cs;
+  if(custom){R=cR;startMode()}else mark();
+});
 document.querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>{vlv=+b.dataset.rv;renderRec()});
+document.querySelectorAll('[data-gv]').forEach(b=>b.onclick=()=>{gv=+b.dataset.gv;renderRec()});
 // ポインタ操作(盤上のキューブからラインの方向になぞる)
 let sw=null;
 const wrap=$('wrap');
@@ -264,7 +320,7 @@ wrap.addEventListener('pointermove',e=>{
   press(bt2,key(c,bt2));
 });
 ['pointerup','pointercancel'].forEach(n=>wrap.addEventListener(n,()=>{sw=null}));
-build();gen();mark();
+build();showIdle();mark();
 </script>
 </body>
 </html>
