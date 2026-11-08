@@ -18,8 +18,10 @@ header,.mh{display:flex;justify-content:space-between;align-items:center}
 .t:hover{color:var(--fg)}
 #tr{display:flex;align-items:baseline;gap:10px;margin:0 0 2px;flex-wrap:wrap}
 #time{font-size:34px;font-variant-numeric:tabular-nums;font-weight:300;line-height:1.1}
-#t2,#mv{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
-#mv{font-size:13px}
+#calc{display:flex;align-items:baseline;gap:8px;font-variant-numeric:tabular-nums}
+#t2{font-size:12px;color:var(--mut)}
+#calc .op,#mv,#pr{font-size:20px;color:var(--fg)}
+#mv,#pr{font-weight:500}
 #st{font-size:12px;margin-left:auto}
 .r{color:#c0392b!important}
 #wrap{position:relative;flex:1;min-height:0;width:100%;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
@@ -58,7 +60,7 @@ th:first-child,td:first-child{text-align:left;color:var(--mut)}
 <main>
 <header><div class="ttl">1×1×1(×n) ルービックキューブ</div><button class="t" id="mn">メニュー</button></header>
 <div class="row"><button class="t" id="new">スタート</button><button class="t" id="rs">やり直し</button></div>
-<div id="tr"><span id="time">0.0</span><span id="mv"></span><span id="t2"></span><span id="st"></span></div>
+<div id="tr"><span id="time">0.0</span><span id="calc"><span id="t2">0.0</span><span class="op">×</span><span id="mv">0</span><span class="op">⇒</span><span id="pr">0.0</span></span><span id="st"></span></div>
 <div id="wrap"><div id="stage"><div id="scene"></div><div id="ui"></div></div></div>
 </main>
 
@@ -72,7 +74,7 @@ th:first-child,td:first-child{text-align:left;color:var(--mut)}
 
 <h2>ルール</h2>
 <div class="lg"><svg viewBox="0 0 60 60"><polygon style="fill:#f5d90a" points="30,4 52,17 30,30 8,17"/><polygon style="fill:#1fa84a" points="8,17 30,30 30,56 8,43"/><polygon style="fill:#f58a1f" points="30,30 52,17 52,43 30,56"/></svg>←のキューブを盤からなくしたらクリア</div>
-<p class="d">読み込み直後は、盤面が白・緑・赤の状態で止まっています。「スタート」を押すと問題が出て、ゲームが始まります。<br>タイムは問題が出た瞬間から計ります。最初に矢印を押してからの経過時間も、小さく並べて表示します。矢印を押した回数が手数です(押して戻す操作も1手です)。</p>
+<p class="d">読み込み直後は、盤面が白・緑・赤の状態で止まっています。「スタート」を押すと問題が出て、ゲームが始まります。<br>タイムは問題が出た瞬間から計ります。画面上部には、タイム(大)・最初に矢印を押してからのタイム・手数・タイム×手数の値を、数字だけで並べて表示します(タイム×手数は、左のタイムに手数をかけた値です)。矢印を押した回数が手数です(押して戻す操作も1手です)。</p>
 
 <h2>操作</h2>
 <p class="d">盤の外側の矢印を押すと、その矢印が指すライン上のキューブがすべて、ラインの方向の軸まわりに180°回転します。押した矢印は塗りつぶしで表示され、もう一度押すと元に戻ります。矢印の少し後ろを押しても反応します。<br>「やり直し」は、この問題を最初の状態に戻して、タイムを計り直します。やり直した盤面は、タイムが赤字になり、記録にも自己ベストにも残りません。</p>
@@ -166,8 +168,8 @@ function tick(now){
 // タイマー(問題が出た瞬間から)
 function updT(){
   const n=performance.now();
-  $('time').textContent=((n-t0)/1000).toFixed(1);
-  if(tMove!==null)$('t2').textContent='操作開始から '+((n-tMove)/1000).toFixed(1);
+  $('time').textContent=((n-t0)/1000).toFixed(1);setPr((n-t0)/1000,1);
+  if(tMove!==null)$('t2').textContent=((n-tMove)/1000).toFixed(1);
 }
 function setStatus(){
   const e=$('st');
@@ -178,8 +180,10 @@ function setStatus(){
   const rr=retry&&started&&!custom;
   e.classList.toggle('r',rr);
   $('time').classList.toggle('r',rr);
+  fit();
 }
-function updMv(){$('mv').textContent=(started&&!custom)?'手数 '+moves:''}
+function updMv(){$('calc').style.display=custom?'none':'flex';$('mv').textContent=moves}
+function setPr(sec,d){$('pr').textContent=(sec*moves).toFixed(d)}
 function refresh(){
   for(let t=0;t<3;t++)for(let i=0;i<2*R+1;i++)bt[t][i].classList.toggle('on',!!pr[t][i]);
   setStatus();
@@ -233,7 +237,7 @@ function renderRec(){
 function finish(){
   done=true;clearInterval(tm);
   const n=performance.now(),s=(n-t0)/1000;
-  $('time').textContent=s.toFixed(2);$('t2').textContent='操作開始から '+((n-tMove)/1000).toFixed(2);
+  $('time').textContent=s.toFixed(2);$('t2').textContent=((n-tMove)/1000).toFixed(2);
   pbG=[];
   if(!retry){
     const a=hist(R),rec={t:+s.toFixed(2),m:moves};
@@ -244,16 +248,16 @@ function finish(){
     });
     a.push(rec);saveHist(R,a);
   }
-  updMv();setStatus();
+  updMv();setPr(s,2);setStatus();
 }
 function reset(){
   clearInterval(tm);moves=0;done=false;pbG=[];tMove=null;
   pr=[0,1,2].map(()=>Array(2*R+1).fill(0));
   cubes.forEach((c,n)=>{c.L=init[n].map(r=>r.slice());c.M=c.L.map(r=>r.slice());c.pend=[];c.anim=null;setT(c,c.M)});
-  $('t2').textContent='';
+  $('t2').textContent='0.0';
   if(custom){$('time').textContent='—'}
   else{$('time').textContent='0.0';t0=performance.now();tm=setInterval(updT,50)}
-  updMv();
+  updMv();setPr(0,1);
   refresh();
 }
 // 読み込み直後:白・緑・赤の状態で停止(スタートを押すまでゲームは始まらない)
@@ -261,9 +265,9 @@ function showIdle(){
   clearInterval(tm);moves=0;done=false;retry=false;pbG=[];tMove=null;started=false;
   pr=[0,1,2].map(()=>Array(2*R+1).fill(0));
   cubes.forEach(c=>{c.L=M0.map(r=>r.slice());c.M=c.L.map(r=>r.slice());c.pend=[];c.anim=null;setT(c,c.M)});
-  $('t2').textContent='';$('time').textContent='0.0';
+  $('t2').textContent='0.0';$('time').textContent='0.0';
   $('new').textContent='スタート';
-  updMv();refresh();
+  updMv();setPr(0,1);refresh();
 }
 function gen(){
   const fin=[[1,1,1],[-1,1,-1],[-1,-1,1]];
