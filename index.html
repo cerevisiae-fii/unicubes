@@ -54,6 +54,15 @@ table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:ta
 th,td{text-align:right;padding:5px 0;font-weight:400}
 th{color:var(--mut);font-size:12px}
 th:first-child,td:first-child{text-align:left;color:var(--mut)}
+/* 初回ルール説明 */
+#intro{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30;display:none;align-items:center;justify-content:center;padding:16px}
+#intro.open{display:flex}
+#intro .card{background:#fff;border-radius:14px;max-width:440px;width:100%;max-height:100%;overflow-y:auto;padding:18px 20px;-webkit-overflow-scrolling:touch}
+#intro h3{font-size:12px;font-weight:600;color:var(--mut);margin:16px 0 6px;letter-spacing:.08em}
+#intro .lg svg{width:48px;height:48px;flex:none}
+#intro polygon{stroke:#1a1a1a;stroke-width:1.5;stroke-linejoin:round}
+#ex svg{display:block;width:210px;max-width:100%;margin:4px auto 6px}
+#intro .go{display:block;margin:14px auto 0;padding:10px 32px;border:0;border-radius:999px;background:#111;color:#fff;font:inherit;font-size:14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -73,6 +82,7 @@ th:first-child,td:first-child{text-align:left;color:var(--mut)}
 <div class="row"><button class="t" data-cs="1">7個</button><button class="t" data-cs="2">19個</button><button class="t" data-cs="3">37個</button></div>
 
 <h2>ルール</h2>
+<div class="row"><button class="t" id="ro">ルール説明をポップアップで見る</button></div>
 <div class="lg"><svg viewBox="0 0 60 60"><polygon style="fill:#f5d90a" points="30,4 52,17 30,30 8,17"/><polygon style="fill:#1fa84a" points="8,17 30,30 30,56 8,43"/><polygon style="fill:#f58a1f" points="30,30 52,17 52,43 30,56"/></svg>←のキューブを盤からなくしたらクリア</div>
 <p class="d">読み込み直後は、盤面が白・緑・赤の状態で止まっています。「スタート」を押すと問題が出て、ゲームが始まります。<br>タイムは問題が出た瞬間から計ります。画面上部には、タイム(大)・最初に矢印を押してからのタイム・手数・タイム×手数の値を、数字だけで並べて表示します(タイム×手数は、左のタイムに手数をかけた値です)。矢印を押した回数が手数です(押して戻す操作も1手です)。</p>
 
@@ -88,6 +98,20 @@ th:first-child,td:first-child{text-align:left;color:var(--mut)}
 <div class="row"><button class="t" data-gv="0">タイム</button><button class="t" data-gv="1">手数</button><button class="t" data-gv="2">タイム×手数</button></div>
 <table id="tbl"></table>
 <p class="d" style="margin-top:14px">ao5は直近5回から最速と最遅を除いた3回の平均、ao12は直近12回から最速と最遅を除いた10回の平均です。タイム×手数は、クリアタイム(秒)に手数をかけた値です。いずれも小さいほど良い記録です。以前の記録(手数なし)はタイムの記録にだけ残ります。</p>
+</div></div>
+
+<div id="intro"><div class="card">
+<div class="ttl">遊び方</div>
+<h3>ゴール</h3>
+<div class="lg"><svg viewBox="0 0 60 60"><polygon style="fill:#f5d90a" points="30,4 52,17 30,30 8,17"/><polygon style="fill:#1fa84a" points="8,17 30,30 30,56 8,43"/><polygon style="fill:#f58a1f" points="30,30 52,17 52,43 30,56"/></svg><span>この向きのキューブ(上が黄・左が緑・右がオレンジ)を、盤から全部なくせばクリアです。</span></div>
+<h3>操作</h3>
+<p class="d">盤の外側の矢印を押すと、その矢印が指すライン上のキューブがすべて、180°回転します。押した矢印は塗りつぶされ、もう一度押すと元に戻ります。盤上のキューブをラインの方向になぞっても、同じ操作ができます。</p>
+<h3>クリア盤面の例</h3>
+<div id="ex"></div>
+<p class="d">黄・緑・オレンジのキューブが1つもない状態がクリアです。残ったキューブの向きは、バラバラでかまいません。</p>
+<h3>ゲームの流れ</h3>
+<p class="d">「スタート」を押すと問題が出て、タイムが動き出します。タイムと、矢印を押した回数(手数)、その2つをかけたタイム×手数が記録されます。</p>
+<button class="go" id="ok">はじめる</button>
 </div></div>
 
 <script>
@@ -325,6 +349,29 @@ wrap.addEventListener('pointermove',e=>{
 });
 ['pointerup','pointercancel'].forEach(n=>wrap.addEventListener(n,()=>{sw=null}));
 build();showIdle();mark();
+// 初回ルール説明(クリア盤面の例の図つき)
+const CC={y:'#f5d90a',w:'#f4f4f0',g:'#1fa84a',r:'#d62d2d',b:'#1f5fd0',o:'#f58a1f'};
+function exampleSvg(){
+  const k=52/70,a=22,h=a*H3,cells=[[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+  // NG(黄・緑・橙)以外の3種類の向き [上,左,右]
+  const OR=[['w','g','r'],['w','b','o'],['y','b','r']];
+  let o='<svg viewBox="-72 -80 144 160" xmlns="http://www.w3.org/2000/svg">';
+  cells.forEach(([q,r],i)=>{
+    const cx=H3*S*q*k,cy=S*(r+q/2)*k,w=81*k,hh=70*k,P=(x,y)=>(cx+x)+','+(cy+y);
+    o+='<polygon style="fill:#f2f2f2;stroke:none" points="'+[P(-w/4,-hh/2),P(w/4,-hh/2),P(w/2,0),P(w/4,hh/2),P(-w/4,hh/2),P(-w/2,0)].join(' ')+'"/>';
+    const [t,l,rr]=OR[i%3];
+    o+='<polygon style="fill:'+CC[t]+'" points="'+[P(0,-a),P(h,-a/2),P(0,0),P(-h,-a/2)].join(' ')+'"/>';
+    o+='<polygon style="fill:'+CC[l]+'" points="'+[P(-h,-a/2),P(0,0),P(0,a),P(-h,a/2)].join(' ')+'"/>';
+    o+='<polygon style="fill:'+CC[rr]+'" points="'+[P(0,0),P(h,-a/2),P(h,a/2),P(0,a)].join(' ')+'"/>';
+  });
+  return o+'</svg>';
+}
+$('ex').innerHTML=exampleSvg();
+$('ok').onclick=()=>$('intro').classList.remove('open');
+$('ro').onclick=()=>$('intro').classList.add('open');
+try{
+  if(!localStorage.getItem('rubik19s_seen')){localStorage.setItem('rubik19s_seen','1');$('intro').classList.add('open')}
+}catch(e){$('intro').classList.add('open')}
 </script>
 </body>
 </html>
